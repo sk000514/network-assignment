@@ -1,8 +1,9 @@
 import enchant as en
+import random
 def isword(word):
     d=en.Dict("en_US")
     return d.check(word)
-    
+
 # green 2 yellow 1 gray 0
 def wordcheck(word1,word2):
     result=[0 for i in range(5)]
@@ -17,3 +18,8 @@ def wordcheck(word1,word2):
 
 # print(wordcheck("hello", "helow"))
 # print(isword("word"))
+def word_generator(num):
+    while True:
+        word="".join(random.sample('ABCDEFGHIJKLMNOPQRSTUVWXYZ',num))
+        if isword(word)==True:
+            return word

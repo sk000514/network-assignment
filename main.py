@@ -2,7 +2,6 @@ from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect
 import time
 from typing import List
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from fastapi.logger import logger
 
 app = FastAPI()
