@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "wordle-be"
+version = "0.1.0"
+description = ""
+authors = ["aminor32 <aminor32dh@gmail.com>"]
+readme = "README.md"
+packages = [{include = "wordle_be"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.88.0"
+pyenchant = "^3.2.2"
+uvicorn = "^0.20.0"
+gunicorn = "^20.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
