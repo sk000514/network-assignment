@@ -17,19 +17,15 @@ class ConnectionManager:
         self.active_connections.append(websocket)
 
     def getOpponent(self, websocket: WebSocket):
-        while True:
-            try:
-                index = self.match_queue.index(websocket)
-                opponent_websocket = self.match_queue[index -
-                                                      (index % 2 * 2 - 1)]
-                print("hello")
-                return opponent_websocket
-            except ValueError:
-                return None
-            except IndexError:
-                print("hh")
-                time.sleep(1)
-                continue
+        try:
+            index = self.match_queue.index(websocket)
+            opponent_websocket = self.match_queue[index -
+                                                    (index % 2 * 2 - 1)]
+            return opponent_websocket
+        except ValueError:
+            return None
+        except IndexError:
+            return 0
 
     def disconnect(self, websocket: WebSocket):
         tmp = self.active_connections.index(websocket)
@@ -64,9 +60,15 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
             if json_object["type"] == 'match':
                 manager.match_queue.append(websocket)
-                manager.getOpponent(websocket)
-                message = generate_message("match", word_generator())
-                await manager.send_message(json.dumps(message), websocket)
+                opponent_websocket=manager.getOpponent(websocket)
+                if opponent_websocket!=0:
+                    message1 = generate_message("match", word_generator())
+                    await manager.send_message(json.dumps(message1), websocket)
+                    message2 = generate_message("match", word_generator())
+                    await manager.send_message(json.dumps(message2), opponent_websocket)
+                else:
+                    message = generate_message("match", "")
+                    await manager.send_message(json.dumps(message), websocket)
             elif json_object["type"] == "guess":
                 if isword(json_object["data"]):
                     opponent_websocket = manager.getOpponent(websocket)
