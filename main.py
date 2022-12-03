@@ -3,6 +3,7 @@ from typing import List
 import json
 import time
 from src.util import isword, word_generator
+
 app = FastAPI()
 
 
@@ -19,8 +20,9 @@ class ConnectionManager:
         while True:
             try:
                 index = self.match_queue.index(websocket)
-                opponent_websocket = self.match_queue[index - (index % 2 * 2 - 1)]
-                
+                opponent_websocket = self.match_queue[index -
+                                                      (index % 2 * 2 - 1)]
+
                 return opponent_websocket
             except ValueError:
                 return None
@@ -50,12 +52,13 @@ def generate_message(message_type: str, data: str):
 manager = ConnectionManager()
 
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+@app.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await manager.connect(websocket)
     try:
         while True:
             json_string = await websocket.receive_text()
+            print(json_string)
             json_object = json.loads(json_string)
 
             if json_object["type"] == 'match':
