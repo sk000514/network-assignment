@@ -11,16 +11,32 @@ def isword(word: str):
 
 def wordcheck(word1: str, word2: str):
     result = [0 for i in range(5)]
+    tmp = {}
+
     word1 = word1.lower()
     word2 = word2.lower()
     for i in range(5):
-        if word1[i] in word2:
-            result[i] += 1
+        if word2[i] not in tmp:
+            tmp[word2[i]]=1
+        else:
+            tmp[word2[i]]+=1
+    for i in range(5):
         if word1[i] == word2[i]:
-            result[i] += 1
+            result[i] = 2
+            tmp[word2[i]]-=1
+    for i in range(5):
+        if word1[i] in tmp:
+            if tmp[word1[i]]==0:
+                continue
+            if result[i]==2:
+                tmp[word1[i]]-=1
+                continue
+            result[i] = 1
+            tmp[word1[i]]-=1
+    print(tmp)
     return result
 
-# print(wordcheck("hello", "helow"))
+print(wordcheck("dtttt",'torso'))
 # print(isword("word"))
 
 

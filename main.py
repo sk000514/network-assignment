@@ -27,7 +27,7 @@ class ConnectionManager:
         except IndexError:
             return 0
 
-    def disconnect(self, websocket: WebSocket):
+    async def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
         try:
             tmp = self.match_queue.index(websocket)
@@ -85,7 +85,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 opponent_websocket = manager.getOpponent(websocket)
                 await manager.send_message(json_string, opponent_websocket)
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        await manager.disconnect(websocket)
         return
 
 
