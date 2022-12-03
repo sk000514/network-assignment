@@ -22,11 +22,12 @@ class ConnectionManager:
                 index = self.match_queue.index(websocket)
                 opponent_websocket = self.match_queue[index -
                                                       (index % 2 * 2 - 1)]
-
+                print("hello")
                 return opponent_websocket
             except ValueError:
                 return None
             except IndexError:
+                print("hh")
                 time.sleep(1)
                 continue
 
