@@ -1,4 +1,5 @@
 import enchant as en
+import random
 
 def isword(word: str):
     d=en.Dict("en_US")
@@ -19,4 +20,7 @@ def wordcheck(word1: str, word2: str):
 # print(wordcheck("hello", "helow"))
 # print(isword("word"))
 def word_generator():
-    pass
+    r=random.randint(1,6580)
+    with open('wordle_word.txt','r') as f:
+        word=f.readline()[r-1]
+    return word

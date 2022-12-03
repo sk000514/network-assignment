@@ -1,5 +1,6 @@
 __pycache__
 .DS_Store
+wordle_word.txt
 
 # IDE settings
 .vscode

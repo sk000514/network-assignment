@@ -1,8 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from typing import List
 import json
-from src.util import isword
-
+from src.util import isword, word_generator
 app = FastAPI()
 
 
@@ -57,7 +56,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if json_object["type"] == 'match':
                 manager.match_queue.append(websocket)
                 # TODO: 단어 파일에서 임이의 단어 보내주기
-                message = generate_message("match", "words")
+                message = generate_message("match", word_generator())
                 await manager.send_message(json.dumps(message), websocket)
             elif json_object["type"] == "guess":
                 if isword(json_object["data"]):
