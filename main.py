@@ -36,14 +36,11 @@ class ConnectionManager:
             websocket.close()
             return
         await websocket.send_text(message)
-        tmp = self.active_connections.index(websocket)
-        await self.active_connections[tmp-(tmp % 2*2-1)].send_text(message)
 
 
-class Message:
-    def __init__(self, type: str, data: str):
-        self.type = type
-        self.data = data
+def generate_message(message_type: str, data: str):
+    return {"type": message_type,
+            "data": data}
 
 
 manager = ConnectionManager()
@@ -55,21 +52,21 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             json_string = await websocket.receive_text()
-            json_object: Message = json.load(json_string)
+            json_object = json.loads(json_string)
 
-            if json_object.type=='match':
+            if json_object["type"] == 'match':
                 manager.match_queue.append(websocket)
                 # TODO: 단어 파일에서 임이의 단어 보내주기
-                message = Message("match", "words")
+                message = generate_message("match", "words")
                 await manager.send_message(json.dumps(message), websocket)
-            elif json_object.type=="guess":
-                if isword(json_object.data):
+            elif json_object["type"] == "guess":
+                if isword(json_object["data"]):
                     opponent_websocket = manager.getOpponent(websocket)
                     await manager.send_message(json_string, opponent_websocket)
                 else:
-                    message = Message("guess", "")
+                    message = generate_message("guess", "")
                     await manager.send_message(json.dumps(message), websocket)
-            elif json_object.type=="result":
+            elif json_object["type"] == "result":
                 opponent_websocket = manager.getOpponent(websocket)
                 await manager.send_message(json_string, opponent_websocket)
     except WebSocketDisconnect:

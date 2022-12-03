@@ -12,6 +12,7 @@ fastapi = "^0.88.0"
 pyenchant = "^3.2.2"
 uvicorn = "^0.20.0"
 gunicorn = "^20.1.0"
+websockets = "^10.4"
 
 
 [tool.poetry.group.dev.dependencies]
