@@ -1,62 +1,34 @@
-from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect
-import time
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from typing import List
-from fastapi.responses import HTMLResponse
-from fastapi.logger import logger
+import json
+from src.util import isword
 
 app = FastAPI()
-
-html = """
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Chat</title>
-    </head>
-    <body>
-        <h1>WebSocket Chat</h1>
-        <h2>Your ID: <span id="ws-id"></span></h2>
-        <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" autocomplete="off"/>
-            <button>Send</button>
-        </form>
-        <ul id='messages'>
-        </ul>
-        <script>
-            var client_id = Date.now()
-            document.querySelector("#ws-id").textContent = client_id;
-            var ws = new WebSocket(`ws://localhost:8000/ws/${client_id}`);
-            ws.onmessage = function(event) {
-                var messages = document.getElementById('messages')
-                var message = document.createElement('li')
-                var content = document.createTextNode(event.data)
-                message.appendChild(content)
-                messages.appendChild(message)
-            };
-            function sendMessage(event) {
-                var input = document.getElementById("messageText")
-                ws.send(input.value)
-                input.value = ''
-                event.preventDefault()
-            }
-        </script>
-    </body>
-</html>
-"""
 
 
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+        self.match_queue: List[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
 
+    def getOpponent(self, websocket: WebSocket):
+        try:
+            index = self.match_queue.index(websocket)
+            opponent_websocket = self.match_queue[index - (index % 2 * 2 - 1)]
+
+            return opponent_websocket
+        except ValueError:
+            return None
+
     def disconnect(self, websocket: WebSocket):
-        tmp=self.active_connections.index(websocket)
-        tmp_websocket=self.active_connections.pop(tmp-(tmp%2*2-1))
+        tmp = self.active_connections.index(websocket)
+        tmp_websocket = self.active_connections.pop(tmp-(tmp % 2*2-1))
         tmp_websocket.close()
-        self.active_connections.remove(websocket)
+        self.active_connections.pop(tmp)
         websocket.close()
 
     async def send_message(self, message: str, websocket: WebSocket):
@@ -64,35 +36,50 @@ class ConnectionManager:
             websocket.close()
             return
         await websocket.send_text(message)
-        tmp=self.active_connections.index(websocket)
-        await self.active_connections[tmp-(tmp%2*2-1)].send_text(message)
+        tmp = self.active_connections.index(websocket)
+        await self.active_connections[tmp-(tmp % 2*2-1)].send_text(message)
 
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
+
+class Message:
+    def __init__(self, type: str, data: str):
+        self.type = type
+        self.data = data
 
 
 manager = ConnectionManager()
 
 
-@app.get("/")
-async def get():
-    return HTMLResponse(html)
-
-
-@app.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int):
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
-            data = await websocket.receive_text()
-            await manager.send_message(f"You wrote: {data}", websocket)
-#            await manager.broadcast(f"Client #{client_id} says: {data}")
+            json_string = await websocket.receive_text()
+            json_object: Message = json.load(json_string)
+
+            if json_object.type=='match':
+                manager.match_queue.append(websocket)
+                # TODO: 단어 파일에서 임이의 단어 보내주기
+                message = Message("match", "words")
+                await manager.send_message(json.dumps(message), websocket)
+            elif json_object.type=="guess":
+                if isword(json_object.data):
+                    opponent_websocket = manager.getOpponent(websocket)
+                    await manager.send_message(json_string, opponent_websocket)
+                else:
+                    message = Message("guess", "")
+                    await manager.send_message(json.dumps(message), websocket)
+            elif json_object.type=="result":
+                opponent_websocket = manager.getOpponent(websocket)
+                await manager.send_message(json_string, opponent_websocket)
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        await manager.broadcast(f"Client #{client_id} left the chat")
+        return
+
+
 def run():
     import uvicorn
     uvicorn.run(app)
+
+
 if __name__ == "__main__":
     run()
