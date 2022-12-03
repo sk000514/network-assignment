@@ -28,11 +28,16 @@ class ConnectionManager:
             return 0
 
     def disconnect(self, websocket: WebSocket):
-        tmp = self.active_connections.index(websocket)
-        tmp_websocket = self.active_connections.pop(tmp-(tmp % 2*2-1))
-        tmp_websocket.close()
-        self.active_connections.pop(tmp)
-        websocket.close()
+        self.active_connections.remove(websocket)
+        try:
+            tmp = self.match_queue.index(websocket)
+            tmp_websocket = self.match_queue.pop(tmp-(tmp % 2*2-1))
+            self.match_queue.remove(websocket)
+            await tmp_websocket.close()
+            await websocket.close()
+        except ValueError:
+            return 
+
 
     async def send_message(self, message: str, websocket: WebSocket):
         if websocket not in self.active_connections:
