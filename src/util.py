@@ -22,5 +22,6 @@ def wordcheck(word1: str, word2: str):
 def word_generator():
     r=random.randint(1,6580)
     with open('wordle_word.txt','r') as f:
-        word=f.readline()[r-1]
+        word=f.readlines()[r-1]
     return word
+print(word_generator())
