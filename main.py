@@ -1,6 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from typing import List
 import json
+import time
 from src.util import isword, word_generator
 app = FastAPI()
 
@@ -15,13 +16,17 @@ class ConnectionManager:
         self.active_connections.append(websocket)
 
     def getOpponent(self, websocket: WebSocket):
-        try:
-            index = self.match_queue.index(websocket)
-            opponent_websocket = self.match_queue[index - (index % 2 * 2 - 1)]
-
-            return opponent_websocket
-        except ValueError:
-            return None
+        while True:
+            try:
+                index = self.match_queue.index(websocket)
+                opponent_websocket = self.match_queue[index - (index % 2 * 2 - 1)]
+                
+                return opponent_websocket
+            except ValueError:
+                return None
+            except IndexError:
+                time.sleep(1)
+                continue
 
     def disconnect(self, websocket: WebSocket):
         tmp = self.active_connections.index(websocket)
@@ -55,7 +60,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
             if json_object["type"] == 'match':
                 manager.match_queue.append(websocket)
-                # TODO: 단어 파일에서 임이의 단어 보내주기
+                manager.getOpponent(websocket)
                 message = generate_message("match", word_generator())
                 await manager.send_message(json.dumps(message), websocket)
             elif json_object["type"] == "guess":
@@ -69,6 +74,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 opponent_websocket = manager.getOpponent(websocket)
                 await manager.send_message(json_string, opponent_websocket)
     except WebSocketDisconnect:
+        manager.disconnect(websocket)
         return
 
 
