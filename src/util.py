@@ -25,23 +25,17 @@ def wordcheck(word1: str, word2: str):
             result[i] = 2
             tmp[word2[i]]-=1
     for i in range(5):
-        if word1[i] in tmp:
-            if tmp[word1[i]]==0:
-                continue
-            if result[i]==2:
-                tmp[word1[i]]-=1
-                continue
+        if word1[i] in tmp and tmp[word1[i]]!=0 and result[i]!=2:
             result[i] = 1
             tmp[word1[i]]-=1
-    print(tmp)
     return result
 
-print(wordcheck("dtttt",'torso'))
+#print(wordcheck("adieu",'punts'))
 # print(isword("word"))
 
 
 def word_generator():
-    r = random.randint(1, 6580)
+    r = random.randint(1, 5152)
     with open('./wordle_word.txt', 'r') as f:
         word = f.readlines()[r-1]
     return word

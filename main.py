@@ -60,7 +60,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     try:
         while True:
             json_string = await websocket.receive_text()
-            print(json_string)
+            print('get',json_string)
             json_object = json.loads(json_string)
 
             if json_object["type"] == 'match':
@@ -68,23 +68,41 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 opponent_websocket=manager.getOpponent(websocket)
                 if opponent_websocket!=0:
                     message1 = generate_message("match", word_generator())
+                    print('send'+message1['data'])
                     await manager.send_message(json.dumps(message1), websocket)
                     message2 = generate_message("match", word_generator())
+                    print('send'+message2['data'])
                     await manager.send_message(json.dumps(message2), opponent_websocket)
+                    message3=generate_message('turn','1')
+                    await manager.send_message(json.dumps(message3),opponent_websocket)
+                    message4=generate_message('turn','')
+                    await manager.send_message(json.dumps(message4),websocket)
+
                 else:
                     message = generate_message("match", "")
+                    print('send'+message['data'])
                     await manager.send_message(json.dumps(message), websocket)
             elif json_object["type"] == "guess":
-                if isword(json_object["data"]):
+                tmp=json.loads(json_object['data'])
+                if isword(tmp["word"]):
+                    message1=generate_message('turn','')
+                    await manager.send_message(json.dumps(message1),websocket)
                     opponent_websocket = manager.getOpponent(websocket)
-                    await manager.send_message(json_string, opponent_websocket)
+                    await manager.send_message(json_string, opponent_websocket)                    
+                    message2=generate_message('turn','1')
+                    await manager.send_message(json.dumps(message2),opponent_websocket)
                 else:
-                    message = generate_message("guess", "")
-                    await manager.send_message(json.dumps(message), websocket)
+                    message1 = generate_message("guess", "")
+                    print('send'+message1['data'])
+                    message2=generate_message('turn','1')   
+                    await manager.send_message(json.dumps(message1), websocket)
+                    await manager.send_message(json.dumps(message2), websocket)
             elif json_object["type"] == "result":
                 opponent_websocket = manager.getOpponent(websocket)
+                print('send'+json_object['data'])
                 await manager.send_message(json_string, opponent_websocket)
     except WebSocketDisconnect:
+        print('disconnect')
         await manager.disconnect(websocket)
         return
 
